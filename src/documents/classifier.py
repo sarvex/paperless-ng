@@ -30,8 +30,7 @@ def preprocess_content(content):
 def load_classifier():
     if not os.path.isfile(settings.MODEL_FILE):
         logger.debug(
-            f"Document classification model does not exist (yet), not "
-            f"performing automatic matching."
+            'Document classification model does not exist (yet), not performing automatic matching.'
         )
         return None
 
@@ -43,20 +42,15 @@ def load_classifier():
             IncompatibleClassifierVersionError):
         # there's something wrong with the model file.
         logger.exception(
-            f"Unrecoverable error while loading document "
-            f"classification model, deleting model file."
+            'Unrecoverable error while loading document classification model, deleting model file.'
         )
         os.unlink(settings.MODEL_FILE)
         classifier = None
     except OSError:
-        logger.exception(
-            f"IO error while loading document classification model"
-        )
+        logger.exception("IO error while loading document classification model")
         classifier = None
     except Exception:
-        logger.exception(
-            f"Unknown error while loading document classification model"
-        )
+        logger.exception("Unknown error while loading document classification model")
         classifier = None
 
     return classifier
@@ -84,21 +78,20 @@ class DocumentClassifier(object):
             if schema_version != self.FORMAT_VERSION:
                 raise IncompatibleClassifierVersionError(
                     "Cannor load classifier, incompatible versions.")
-            else:
-                try:
-                    self.data_hash = pickle.load(f)
-                    self.data_vectorizer = pickle.load(f)
-                    self.tags_binarizer = pickle.load(f)
+            try:
+                self.data_hash = pickle.load(f)
+                self.data_vectorizer = pickle.load(f)
+                self.tags_binarizer = pickle.load(f)
 
-                    self.tags_classifier = pickle.load(f)
-                    self.correspondent_classifier = pickle.load(f)
-                    self.document_type_classifier = pickle.load(f)
-                except Exception:
-                    raise ClassifierModelCorruptError()
+                self.tags_classifier = pickle.load(f)
+                self.correspondent_classifier = pickle.load(f)
+                self.document_type_classifier = pickle.load(f)
+            except Exception:
+                raise ClassifierModelCorruptError()
 
     def save(self):
         target_file = settings.MODEL_FILE
-        target_file_temp = settings.MODEL_FILE + ".part"
+        target_file_temp = f"{settings.MODEL_FILE}.part"
 
         with open(target_file_temp, "wb") as f:
             pickle.dump(self.FORMAT_VERSION, f)
@@ -117,10 +110,10 @@ class DocumentClassifier(object):
 
     def train(self):
 
-        data = list()
-        labels_tags = list()
-        labels_correspondent = list()
-        labels_document_type = list()
+        data = []
+        labels_tags = []
+        labels_correspondent = []
+        labels_document_type = []
 
         # Step 1: Extract and preprocess training data from the database.
         logger.debug("Gathering data from database...")
@@ -159,7 +152,7 @@ class DocumentClassifier(object):
         if self.data_hash and new_data_hash == self.data_hash:
             return False
 
-        labels_tags_unique = set([tag for tags in labels_tags for tag in tags])
+        labels_tags_unique = {tag for tags in labels_tags for tag in tags}
 
         num_tags = len(labels_tags_unique)
 
@@ -172,13 +165,7 @@ class DocumentClassifier(object):
         num_document_types = len(set(labels_document_type) | {-1}) - 1
 
         logger.debug(
-            "{} documents, {} tag(s), {} correspondent(s), "
-            "{} document type(s).".format(
-                len(data),
-                num_tags,
-                num_correspondents,
-                num_document_types
-            )
+            f"{len(data)} documents, {num_tags} tag(s), {num_correspondents} correspondent(s), {num_document_types} document type(s)."
         )
 
         from sklearn.feature_extraction.text import CountVectorizer
@@ -259,10 +246,7 @@ class DocumentClassifier(object):
         if self.correspondent_classifier:
             X = self.data_vectorizer.transform([preprocess_content(content)])
             correspondent_id = self.correspondent_classifier.predict(X)
-            if correspondent_id != -1:
-                return correspondent_id
-            else:
-                return None
+            return correspondent_id if correspondent_id != -1 else None
         else:
             return None
 
@@ -270,10 +254,7 @@ class DocumentClassifier(object):
         if self.document_type_classifier:
             X = self.data_vectorizer.transform([preprocess_content(content)])
             document_type_id = self.document_type_classifier.predict(X)
-            if document_type_id != -1:
-                return document_type_id
-            else:
-                return None
+            return document_type_id if document_type_id != -1 else None
         else:
             return None
 

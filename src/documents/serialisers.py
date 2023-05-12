@@ -114,10 +114,7 @@ class ColorField(serializers.Field):
         raise serializers.ValidationError()
 
     def to_representation(self, value):
-        for id, color in self.COLOURS:
-            if color == value:
-                return id
-        return 1
+        return next((id for id, color in self.COLOURS if color == value), 1)
 
 
 class TagSerializerVersion1(MatchingModelSerializer):
@@ -279,13 +276,13 @@ class DocumentListSerializer(serializers.Serializer):
     )
 
     def _validate_document_id_list(self, documents, name="documents"):
-        if not type(documents) == list:
+        if type(documents) != list:
             raise serializers.ValidationError(f"{name} must be a list")
-        if not all([type(i) == int for i in documents]):
+        if any(type(i) != int for i in documents):
             raise serializers.ValidationError(
                 f"{name} must be a list of integers")
         count = Document.objects.filter(id__in=documents).count()
-        if not count == len(documents):
+        if count != len(documents):
             raise serializers.ValidationError(
                 f"Some documents in {name} don't exist or were "
                 f"specified twice.")
@@ -313,13 +310,13 @@ class BulkEditSerializer(DocumentListSerializer):
     parameters = serializers.DictField(allow_empty=True)
 
     def _validate_tag_id_list(self, tags, name="tags"):
-        if not type(tags) == list:
+        if type(tags) != list:
             raise serializers.ValidationError(f"{name} must be a list")
-        if not all([type(i) == int for i in tags]):
+        if any(type(i) != int for i in tags):
             raise serializers.ValidationError(
                 f"{name} must be a list of integers")
         count = Tag.objects.filter(id__in=tags).count()
-        if not count == len(tags):
+        if count != len(tags):
             raise serializers.ValidationError(
                 f"Some tags in {name} don't exist or were specified twice.")
 
@@ -340,41 +337,38 @@ class BulkEditSerializer(DocumentListSerializer):
             raise serializers.ValidationError("Unsupported method.")
 
     def _validate_parameters_tags(self, parameters):
-        if 'tag' in parameters:
-            tag_id = parameters['tag']
-            try:
-                Tag.objects.get(id=tag_id)
-            except Tag.DoesNotExist:
-                raise serializers.ValidationError("Tag does not exist")
-        else:
+        if 'tag' not in parameters:
             raise serializers.ValidationError("tag not specified")
+        tag_id = parameters['tag']
+        try:
+            Tag.objects.get(id=tag_id)
+        except Tag.DoesNotExist:
+            raise serializers.ValidationError("Tag does not exist")
 
     def _validate_parameters_document_type(self, parameters):
-        if 'document_type' in parameters:
-            document_type_id = parameters['document_type']
-            if document_type_id is None:
-                # None is ok
-                return
-            try:
-                DocumentType.objects.get(id=document_type_id)
-            except DocumentType.DoesNotExist:
-                raise serializers.ValidationError(
-                    "Document type does not exist")
-        else:
+        if 'document_type' not in parameters:
             raise serializers.ValidationError("document_type not specified")
+        document_type_id = parameters['document_type']
+        if document_type_id is None:
+            # None is ok
+            return
+        try:
+            DocumentType.objects.get(id=document_type_id)
+        except DocumentType.DoesNotExist:
+            raise serializers.ValidationError(
+                "Document type does not exist")
 
     def _validate_parameters_correspondent(self, parameters):
-        if 'correspondent' in parameters:
-            correspondent_id = parameters['correspondent']
-            if correspondent_id is None:
-                return
-            try:
-                Correspondent.objects.get(id=correspondent_id)
-            except Correspondent.DoesNotExist:
-                raise serializers.ValidationError(
-                    "Correspondent does not exist")
-        else:
+        if 'correspondent' not in parameters:
             raise serializers.ValidationError("correspondent not specified")
+        correspondent_id = parameters['correspondent']
+        if correspondent_id is None:
+            return
+        try:
+            Correspondent.objects.get(id=correspondent_id)
+        except Correspondent.DoesNotExist:
+            raise serializers.ValidationError(
+                "Correspondent does not exist")
 
     def _validate_parameters_modify_tags(self, parameters):
         if "add_tags" in parameters:
@@ -397,7 +391,7 @@ class BulkEditSerializer(DocumentListSerializer):
             self._validate_parameters_correspondent(parameters)
         elif method == bulk_edit.set_document_type:
             self._validate_parameters_document_type(parameters)
-        elif method == bulk_edit.add_tag or method == bulk_edit.remove_tag:
+        elif method in [bulk_edit.add_tag, bulk_edit.remove_tag]:
             self._validate_parameters_tags(parameters)
         elif method == bulk_edit.modify_tags:
             self._validate_parameters_modify_tags(parameters)
@@ -455,22 +449,13 @@ class PostDocumentSerializer(serializers.Serializer):
         return document.name, document_data
 
     def validate_correspondent(self, correspondent):
-        if correspondent:
-            return correspondent.id
-        else:
-            return None
+        return correspondent.id if correspondent else None
 
     def validate_document_type(self, document_type):
-        if document_type:
-            return document_type.id
-        else:
-            return None
+        return document_type.id if document_type else None
 
     def validate_tags(self, tags):
-        if tags:
-            return [tag.id for tag in tags]
-        else:
-            return None
+        return [tag.id for tag in tags] if tags else None
 
 
 class BulkDownloadSerializer(DocumentListSerializer):

@@ -93,7 +93,7 @@ class Command(BaseCommand):
 
         for record in self.manifest:
 
-            if not record["model"] == "documents.document":
+            if record["model"] != "documents.document":
                 continue
 
             if EXPORTER_FILE_NAME not in record:
@@ -105,8 +105,7 @@ class Command(BaseCommand):
             doc_file = record[EXPORTER_FILE_NAME]
             if not os.path.exists(os.path.join(self.source, doc_file)):
                 raise CommandError(
-                    'The manifest file refers to "{}" which does not '
-                    'appear to be in the source directory.'.format(doc_file)
+                    f'The manifest file refers to "{doc_file}" which does not appear to be in the source directory.'
                 )
 
             if EXPORTER_ARCHIVE_NAME in record:

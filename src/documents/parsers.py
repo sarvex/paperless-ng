@@ -50,18 +50,11 @@ def get_default_file_extension(mime_type):
         if mime_type in supported_mime_types:
             return supported_mime_types[mime_type]
 
-    ext = mimetypes.guess_extension(mime_type)
-    if ext:
-        return ext
-    else:
-        return ""
+    return ext if (ext := mimetypes.guess_extension(mime_type)) else ""
 
 
 def is_file_ext_supported(ext):
-    if ext:
-        return ext.lower() in get_supported_file_extensions()
-    else:
-        return False
+    return ext.lower() in get_supported_file_extensions() if ext else False
 
 
 def get_supported_file_extensions():
@@ -139,8 +132,8 @@ def run_convert(input_file,
 
     logger.debug("Execute: " + " ".join(args), extra={'group': logging_group})
 
-    if not subprocess.Popen(args, env=environment).wait() == 0:
-        raise ParseError("Convert failed at {}".format(args))
+    if subprocess.Popen(args, env=environment).wait() != 0:
+        raise ParseError(f"Convert failed at {args}")
 
 
 def get_default_thumbnail():
@@ -164,8 +157,8 @@ def make_thumbnail_from_pdf_gs_fallback(in_path, temp_dir, logging_group=None):
            "-o", gs_out_path,
            in_path]
     try:
-        if not subprocess.Popen(cmd).wait() == 0:
-            raise ParseError("Thumbnail (gs) failed at {}".format(cmd))
+        if subprocess.Popen(cmd).wait() != 0:
+            raise ParseError(f"Thumbnail (gs) failed at {cmd}")
         # then run convert on the output from gs
         run_convert(density=300,
                     scale="500x5000>",
@@ -191,15 +184,17 @@ def make_thumbnail_from_pdf(in_path, temp_dir, logging_group=None):
 
     # Run convert to get a decent thumbnail
     try:
-        run_convert(density=300,
-                    scale="500x5000>",
-                    alpha="remove",
-                    strip=True,
-                    trim=False,
-                    auto_orient=True,
-                    input_file="{}[0]".format(in_path),
-                    output_file=out_path,
-                    logging_group=logging_group)
+        run_convert(
+            density=300,
+            scale="500x5000>",
+            alpha="remove",
+            strip=True,
+            trim=False,
+            auto_orient=True,
+            input_file=f"{in_path}[0]",
+            output_file=out_path,
+            logging_group=logging_group,
+        )
     except ParseError:
         out_path = make_thumbnail_from_pdf_gs_fallback(
             in_path, temp_dir, logging_group)
@@ -317,20 +312,19 @@ class DocumentParser(LoggingMixin):
                                 mime_type,
                                 file_name=None):
         thumbnail = self.get_thumbnail(document_path, mime_type, file_name)
-        if settings.OPTIMIZE_THUMBNAILS:
-            out_path = os.path.join(self.tempdir, "thumb_optipng.png")
-
-            args = (settings.OPTIPNG_BINARY,
-                    "-silent", "-o5", thumbnail, "-out", out_path)
-
-            self.log('debug', f"Execute: {' '.join(args)}")
-
-            if not subprocess.Popen(args).wait() == 0:
-                raise ParseError("Optipng failed at {}".format(args))
-
-            return out_path
-        else:
+        if not settings.OPTIMIZE_THUMBNAILS:
             return thumbnail
+        out_path = os.path.join(self.tempdir, "thumb_optipng.png")
+
+        args = (settings.OPTIPNG_BINARY,
+                "-silent", "-o5", thumbnail, "-out", out_path)
+
+        self.log('debug', f"Execute: {' '.join(args)}")
+
+        if subprocess.Popen(args).wait() != 0:
+            raise ParseError(f"Optipng failed at {args}")
+
+        return out_path
 
     def get_text(self):
         return self.text

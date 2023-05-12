@@ -29,7 +29,7 @@ class TestAttributes(TestCase):
 
         self.assertEqual(file_info.title, title, filename)
 
-        self.assertEqual(tuple([t.name for t in file_info.tags]), tags, filename)
+        self.assertEqual(tuple(t.name for t in file_info.tags), tags, filename)
 
 
     def test_guess_attributes_from_name_when_title_starts_with_dash(self):
@@ -220,15 +220,14 @@ class FaultyParser(DocumentParser):
 
 def fake_magic_from_file(file, mime=False):
 
-    if mime:
-        if os.path.splitext(file)[1] == ".pdf":
-            return "application/pdf"
-        elif os.path.splitext(file)[1] == ".png":
-            return "image/png"
-        else:
-            return "unknown"
-    else:
+    if not mime:
         return "A verbose string that describes the contents of the file"
+    if os.path.splitext(file)[1] == ".pdf":
+        return "application/pdf"
+    elif os.path.splitext(file)[1] == ".png":
+        return "image/png"
+    else:
+        return "unknown"
 
 
 @mock.patch("documents.consumer.magic.from_file", fake_magic_from_file)

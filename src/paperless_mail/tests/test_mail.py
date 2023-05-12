@@ -38,7 +38,7 @@ class BogusMailBox(ContextManager):
         self.messages_spam = []
 
     def login(self, username, password):
-        if not (username == 'admin' and password == 'secret'):
+        if username != 'admin' or password != 'secret':
             raise Exception()
 
     folder = BogusFolderManager()
@@ -103,9 +103,10 @@ def create_message(num_attachments=1, body="", subject="the suject", from_="noon
     message.attachments = []
     message.from_ = from_
     message.body = body
-    for i in range(num_attachments):
-        message.attachments.append(create_attachment(filename=f"file_{i}.pdf"))
-
+    message.attachments.extend(
+        create_attachment(filename=f"file_{i}.pdf")
+        for i in range(num_attachments)
+    )
     message.seen = seen
     message.flagged = flagged
 
@@ -123,10 +124,7 @@ def create_attachment(filename="the_file.pdf", content_disposition="attachment",
 def fake_magic_from_buffer(buffer, mime=False):
 
     if mime:
-        if 'PDF' in str(buffer):
-            return 'application/pdf'
-        else:
-            return 'unknown/type'
+        return 'application/pdf' if 'PDF' in str(buffer) else 'unknown/type'
     else:
         return 'Some verbose file description'
 
@@ -151,9 +149,16 @@ class TestMail(DirectoriesMixin, TestCase):
         super(TestMail, self).setUp()
 
     def reset_bogus_mailbox(self):
-        self.bogus_mailbox.messages = []
         self.bogus_mailbox.messages_spam = []
-        self.bogus_mailbox.messages.append(create_message(subject="Invoice 1", from_="amazon@amazon.de", body="cables", seen=True, flagged=False))
+        self.bogus_mailbox.messages = [
+            create_message(
+                subject="Invoice 1",
+                from_="amazon@amazon.de",
+                body="cables",
+                seen=True,
+                flagged=False,
+            )
+        ]
         self.bogus_mailbox.messages.append(create_message(subject="Invoice 2", body="from my favorite electronic store", seen=False, flagged=True))
         self.bogus_mailbox.messages.append(create_message(subject="Claim your $10M price now!", from_="amazon@amazon-some-indian-site.org", seen=False))
 

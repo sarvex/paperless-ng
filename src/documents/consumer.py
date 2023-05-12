@@ -144,18 +144,19 @@ class Consumer(LoggingMixin):
         )
 
         try:
-            Popen((
-                settings.POST_CONSUME_SCRIPT,
-                str(document.pk),
-                document.get_public_filename(),
-                os.path.normpath(document.source_path),
-                os.path.normpath(document.thumbnail_path),
-                reverse("document-download", kwargs={"pk": document.pk}),
-                reverse("document-thumb", kwargs={"pk": document.pk}),
-                str(document.correspondent),
-                str(",".join(document.tags.all().values_list(
-                    "name", flat=True)))
-            )).wait()
+            Popen(
+                (
+                    settings.POST_CONSUME_SCRIPT,
+                    str(document.pk),
+                    document.get_public_filename(),
+                    os.path.normpath(document.source_path),
+                    os.path.normpath(document.thumbnail_path),
+                    reverse("document-download", kwargs={"pk": document.pk}),
+                    reverse("document-thumb", kwargs={"pk": document.pk}),
+                    str(document.correspondent),
+                    ",".join(document.tags.all().values_list("name", flat=True)),
+                )
+            ).wait()
         except Exception as e:
             self._fail(
                 MESSAGE_POST_CONSUME_SCRIPT_ERROR,
@@ -335,8 +336,8 @@ class Consumer(LoggingMixin):
 
                 # https://github.com/jonaswinkler/paperless-ng/discussions/1037
                 shadow_file = os.path.join(
-                    os.path.dirname(self.path),
-                    "._" + os.path.basename(self.path))
+                    os.path.dirname(self.path), f"._{os.path.basename(self.path)}"
+                )
 
                 if os.path.isfile(shadow_file):
                     self.log("debug", "Deleting file {}".format(shadow_file))

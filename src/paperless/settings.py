@@ -35,7 +35,7 @@ def __get_boolean(key, default="NO"):
     Return a boolean value based on whatever the user has supplied in the
     environment based on whether the value "looks like" it's True or not.
     """
-    return bool(os.getenv(key, default).lower() in ("yes", "y", "1", "t", "true"))
+    return os.getenv(key, default).lower() in ("yes", "y", "1", "t", "true")
 
 
 # NEVER RUN WITH DEBUG IN PRODUCTION.
@@ -143,13 +143,13 @@ ROOT_URLCONF = 'paperless.urls'
 
 FORCE_SCRIPT_NAME = os.getenv("PAPERLESS_FORCE_SCRIPT_NAME")
 BASE_URL = (FORCE_SCRIPT_NAME or "") + "/"
-LOGIN_URL = BASE_URL + "accounts/login/"
+LOGIN_URL = f"{BASE_URL}accounts/login/"
 LOGOUT_REDIRECT_URL = os.getenv("PAPERLESS_LOGOUT_REDIRECT_URL")
 
 WSGI_APPLICATION = 'paperless.wsgi.application'
 ASGI_APPLICATION = "paperless.asgi.application"
 
-STATIC_URL = os.getenv("PAPERLESS_STATIC_URL", BASE_URL + "static/")
+STATIC_URL = os.getenv("PAPERLESS_STATIC_URL", f"{BASE_URL}static/")
 WHITENOISE_STATIC_PREFIX = "/static/"
 
 # TODO: what is this used for?
@@ -180,13 +180,7 @@ CHANNEL_LAYERS = {
     },
 }
 
-###############################################################################
-# Security                                                                    #
-###############################################################################
-
-AUTO_LOGIN_USERNAME = os.getenv("PAPERLESS_AUTO_LOGIN_USERNAME")
-
-if AUTO_LOGIN_USERNAME:
+if AUTO_LOGIN_USERNAME := os.getenv("PAPERLESS_AUTO_LOGIN_USERNAME"):
     _index = MIDDLEWARE.index('django.contrib.auth.middleware.AuthenticationMiddleware')
     # This overrides everything the auth middleware is doing but still allows
     # regular login in case the provided user does not exist.
@@ -208,11 +202,7 @@ if ENABLE_HTTP_REMOTE_USER:
     )
 
 # X-Frame options for embedded PDF display:
-if DEBUG:
-    X_FRAME_OPTIONS = 'ANY'
-else:
-    X_FRAME_OPTIONS = 'SAMEORIGIN'
-
+X_FRAME_OPTIONS = 'ANY' if DEBUG else 'SAMEORIGIN'
 # We allow CORS from localhost:8080
 CORS_ALLOWED_ORIGINS = tuple(os.getenv("PAPERLESS_CORS_ALLOWED_HOSTS", "http://localhost:8000").split(","))
 
@@ -228,8 +218,7 @@ SECRET_KEY = os.getenv(
     "e11fl1oa-*ytql8p)(06fbj4ukrlo+n7k&q5+$1md7i+mge=ee"
 )
 
-_allowed_hosts = os.getenv("PAPERLESS_ALLOWED_HOSTS")
-if _allowed_hosts:
+if _allowed_hosts := os.getenv("PAPERLESS_ALLOWED_HOSTS"):
     ALLOWED_HOSTS = _allowed_hosts.split(",")
 else:
     ALLOWED_HOSTS = ["*"]
@@ -529,11 +518,10 @@ POST_CONSUME_SCRIPT = os.getenv("PAPERLESS_POST_CONSUME_SCRIPT")
 DATE_ORDER = os.getenv("PAPERLESS_DATE_ORDER", "DMY")
 FILENAME_DATE_ORDER = os.getenv("PAPERLESS_FILENAME_DATE_ORDER")
 
-# Transformations applied before filename parsing
-FILENAME_PARSE_TRANSFORMS = []
-for t in json.loads(os.getenv("PAPERLESS_FILENAME_PARSE_TRANSFORMS", "[]")):
-    FILENAME_PARSE_TRANSFORMS.append((re.compile(t["pattern"]), t["repl"]))
-
+FILENAME_PARSE_TRANSFORMS = [
+    (re.compile(t["pattern"]), t["repl"])
+    for t in json.loads(os.getenv("PAPERLESS_FILENAME_PARSE_TRANSFORMS", "[]"))
+]
 # TODO: this should not have a prefix.
 # Specify the filename format for out files
 PAPERLESS_FILENAME_FORMAT = os.getenv("PAPERLESS_FILENAME_FORMAT")
@@ -557,6 +545,5 @@ if os.getenv("PAPERLESS_IGNORE_DATES", ""):
     import dateparser
 
     for s in os.getenv("PAPERLESS_IGNORE_DATES", "").split(","):
-        d = dateparser.parse(s)
-        if d:
+        if d := dateparser.parse(s):
             IGNORE_DATES.add(d.date())

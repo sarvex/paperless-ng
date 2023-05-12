@@ -58,16 +58,18 @@ class TestFileHandling(DirectoriesMixin, TestCase):
         # test that creating dirs for the source_path creates the correct directory
         create_source_path_directory(document.source_path)
         Path(document.source_path).touch()
-        self.assertEqual(os.path.isdir(settings.ORIGINALS_DIR + "/none"), True)
+        self.assertEqual(os.path.isdir(f"{settings.ORIGINALS_DIR}/none"), True)
 
         # Set a correspondent and save the document
         document.correspondent = Correspondent.objects.get_or_create(name="test")[0]
         document.save()
 
         # Check proper handling of files
-        self.assertEqual(os.path.isdir(settings.ORIGINALS_DIR + "/test"), True)
-        self.assertEqual(os.path.isdir(settings.ORIGINALS_DIR + "/none"), False)
-        self.assertEqual(os.path.isfile(settings.ORIGINALS_DIR + "/test/test.pdf.gpg"), True)
+        self.assertEqual(os.path.isdir(f"{settings.ORIGINALS_DIR}/test"), True)
+        self.assertEqual(os.path.isdir(f"{settings.ORIGINALS_DIR}/none"), False)
+        self.assertEqual(
+            os.path.isfile(f"{settings.ORIGINALS_DIR}/test/test.pdf.gpg"), True
+        )
 
     @override_settings(PAPERLESS_FILENAME_FORMAT="{correspondent}/{correspondent}")
     def test_file_renaming_missing_permissions(self):
@@ -84,20 +86,24 @@ class TestFileHandling(DirectoriesMixin, TestCase):
         Path(document.source_path).touch()
 
         # Test source_path
-        self.assertEqual(document.source_path, settings.ORIGINALS_DIR + "/none/none.pdf")
+        self.assertEqual(
+            document.source_path, f"{settings.ORIGINALS_DIR}/none/none.pdf"
+        )
 
         # Make the folder read- and execute-only (no writing and no renaming)
-        os.chmod(settings.ORIGINALS_DIR + "/none", 0o555)
+        os.chmod(f"{settings.ORIGINALS_DIR}/none", 0o555)
 
         # Set a correspondent and save the document
         document.correspondent = Correspondent.objects.get_or_create(name="test")[0]
         document.save()
 
         # Check proper handling of files
-        self.assertEqual(os.path.isfile(settings.ORIGINALS_DIR + "/none/none.pdf"), True)
+        self.assertEqual(
+            os.path.isfile(f"{settings.ORIGINALS_DIR}/none/none.pdf"), True
+        )
         self.assertEqual(document.filename, "none/none.pdf")
 
-        os.chmod(settings.ORIGINALS_DIR + "/none", 0o777)
+        os.chmod(f"{settings.ORIGINALS_DIR}/none", 0o777)
 
     @override_settings(PAPERLESS_FILENAME_FORMAT="{correspondent}/{correspondent}")
     def test_file_renaming_database_error(self):
@@ -130,7 +136,9 @@ class TestFileHandling(DirectoriesMixin, TestCase):
 
             # Check proper handling of files
             self.assertTrue(os.path.isfile(document.source_path))
-            self.assertEqual(os.path.isfile(settings.ORIGINALS_DIR + "/none/none.pdf"), True)
+            self.assertEqual(
+                os.path.isfile(f"{settings.ORIGINALS_DIR}/none/none.pdf"), True
+            )
             self.assertEqual(document.filename, "none/none.pdf")
 
     @override_settings(PAPERLESS_FILENAME_FORMAT="{correspondent}/{correspondent}")
@@ -151,8 +159,10 @@ class TestFileHandling(DirectoriesMixin, TestCase):
         # Ensure file deletion after delete
         pk = document.pk
         document.delete()
-        self.assertEqual(os.path.isfile(settings.ORIGINALS_DIR + "/none/none.pdf"), False)
-        self.assertEqual(os.path.isdir(settings.ORIGINALS_DIR + "/none"), False)
+        self.assertEqual(
+            os.path.isfile(f"{settings.ORIGINALS_DIR}/none/none.pdf"), False
+        )
+        self.assertEqual(os.path.isdir(f"{settings.ORIGINALS_DIR}/none"), False)
 
     @override_settings(PAPERLESS_FILENAME_FORMAT="{correspondent}/{correspondent}")
     def test_document_delete_nofile(self):
@@ -178,7 +188,7 @@ class TestFileHandling(DirectoriesMixin, TestCase):
         create_source_path_directory(document.source_path)
 
         Path(document.source_path).touch()
-        important_file = document.source_path + "test"
+        important_file = f"{document.source_path}test"
         Path(important_file).touch()
 
         # Set a correspondent and save the document
@@ -186,8 +196,8 @@ class TestFileHandling(DirectoriesMixin, TestCase):
         document.save()
 
         # Check proper handling of files
-        self.assertEqual(os.path.isdir(settings.ORIGINALS_DIR + "/test"), True)
-        self.assertEqual(os.path.isdir(settings.ORIGINALS_DIR + "/none"), True)
+        self.assertEqual(os.path.isdir(f"{settings.ORIGINALS_DIR}/test"), True)
+        self.assertEqual(os.path.isdir(f"{settings.ORIGINALS_DIR}/none"), True)
         self.assertTrue(os.path.isfile(important_file))
 
     @override_settings(PAPERLESS_FILENAME_FORMAT="{document_type} - {title}")
@@ -351,14 +361,16 @@ class TestFileHandling(DirectoriesMixin, TestCase):
         Path(document.source_path).touch()
 
         # Check proper handling of files
-        self.assertEqual(os.path.isdir(settings.ORIGINALS_DIR + "/none/none"), True)
+        self.assertEqual(os.path.isdir(f"{settings.ORIGINALS_DIR}/none/none"), True)
 
         pk = document.pk
         document.delete()
 
-        self.assertEqual(os.path.isfile(settings.ORIGINALS_DIR + "/none/none/none.pdf"), False)
-        self.assertEqual(os.path.isdir(settings.ORIGINALS_DIR + "/none/none"), False)
-        self.assertEqual(os.path.isdir(settings.ORIGINALS_DIR + "/none"), False)
+        self.assertEqual(
+            os.path.isfile(f"{settings.ORIGINALS_DIR}/none/none/none.pdf"), False
+        )
+        self.assertEqual(os.path.isdir(f"{settings.ORIGINALS_DIR}/none/none"), False)
+        self.assertEqual(os.path.isdir(f"{settings.ORIGINALS_DIR}/none"), False)
         self.assertEqual(os.path.isdir(settings.ORIGINALS_DIR), True)
 
     @override_settings(PAPERLESS_FILENAME_FORMAT=None)
@@ -558,9 +570,8 @@ class TestFileHandlingWithArchive(DirectoriesMixin, TestCase):
         def fake_rename(src, dst):
             if "archive" in src:
                 raise OSError()
-            else:
-                os.remove(src)
-                Path(dst).touch()
+            os.remove(src)
+            Path(dst).touch()
 
         m.side_effect = fake_rename
 
@@ -596,9 +607,8 @@ class TestFileHandlingWithArchive(DirectoriesMixin, TestCase):
         def fake_rename(src, dst):
             if "original" in src:
                 raise OSError()
-            else:
-                os.remove(src)
-                Path(dst).touch()
+            os.remove(src)
+            Path(dst).touch()
 
         m.side_effect = fake_rename
 
@@ -711,6 +721,6 @@ def run():
 
     doc.save()
 
-    for i in range(30):
+    for _ in range(30):
         doc.title = str(random.randrange(1, 5))
         doc.save()

@@ -68,8 +68,10 @@ class TestArchiver(DirectoriesMixin, TestCase):
     def test_naming_priorities(self):
         doc1 = Document.objects.create(checksum="A", title="document", content="first document", mime_type="application/pdf", filename="document.pdf")
         doc2 = Document.objects.create(checksum="B", title="document", content="second document", mime_type="application/pdf", filename="document_01.pdf")
-        shutil.copy(sample_file, os.path.join(self.dirs.originals_dir, f"document.pdf"))
-        shutil.copy(sample_file, os.path.join(self.dirs.originals_dir, f"document_01.pdf"))
+        shutil.copy(sample_file, os.path.join(self.dirs.originals_dir, "document.pdf"))
+        shutil.copy(
+            sample_file, os.path.join(self.dirs.originals_dir, "document_01.pdf")
+        )
 
         handle_document(doc2.pk)
         handle_document(doc1.pk)
@@ -107,7 +109,16 @@ class TestDecryptDocuments(TestCase):
         doc = Document.objects.create(checksum="82186aaa94f0b98697d704b90fd1c072", title="wow", filename="0000004.pdf.gpg",  mime_type="application/pdf", storage_type=Document.STORAGE_TYPE_GPG)
 
         shutil.copy(os.path.join(os.path.dirname(__file__), "samples", "documents", "originals", "0000004.pdf.gpg"), os.path.join(originals_dir, "0000004.pdf.gpg"))
-        shutil.copy(os.path.join(os.path.dirname(__file__), "samples", "documents", "thumbnails", f"0000004.png.gpg"), os.path.join(thumb_dir, f"{doc.id:07}.png.gpg"))
+        shutil.copy(
+            os.path.join(
+                os.path.dirname(__file__),
+                "samples",
+                "documents",
+                "thumbnails",
+                "0000004.png.gpg",
+            ),
+            os.path.join(thumb_dir, f"{doc.id:07}.png.gpg"),
+        )
 
         call_command('decrypt_documents')
 

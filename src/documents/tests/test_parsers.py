@@ -15,10 +15,7 @@ from paperless_text.parsers import TextDocumentParser
 def fake_magic_from_file(file, mime=False):
 
     if mime:
-        if os.path.splitext(file)[1] == ".pdf":
-            return "application/pdf"
-        else:
-            return "unknown"
+        return "application/pdf" if os.path.splitext(file)[1] == ".pdf" else "unknown"
     else:
         return "A verbose string that describes the contents of the file"
 

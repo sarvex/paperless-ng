@@ -53,10 +53,9 @@ class Document(object):
     def __str__(self):
         created = self.created.strftime("%Y%m%d%H%M%S")
         if self.correspondent and self.title:
-            return "{}: {} - {}".format(
-                created, self.correspondent, self.title)
+            return f"{created}: {self.correspondent} - {self.title}"
         if self.correspondent or self.title:
-            return "{}: {}".format(created, self.correspondent or self.title)
+            return f"{created}: {self.correspondent or self.title}"
         return str(created)
 
     @property
@@ -74,7 +73,7 @@ class Document(object):
 
     @property
     def file_name(self):
-        return slugify(str(self)) + "." + self.file_type
+        return f"{slugify(str(self))}.{self.file_type}"
 
 
 def set_checksums(apps, schema_editor):
@@ -109,13 +108,32 @@ def set_checksums(apps, schema_editor):
 
         if checksum in sums:
             error = "\n{line}{p1}\n\n{doc1}\n{doc2}\n\n{p2}\n\n{code}\n\n{p3}{line}".format(
-                p1=colourise("It appears that you have two identical documents in your collection and \nPaperless no longer supports this (see issue #97).  The documents in question\nare:", fg="yellow"),
-                p2=colourise("To fix this problem, you'll have to remove one of them from the database, a task\nmost easily done by running the following command in the same\ndirectory as manage.py:", fg="yellow"),
-                p3=colourise("When that's finished, re-run the migrate, and provided that there aren't any\nother duplicates, you should be good to go.", fg="yellow"),
-                doc1=colourise("  * {} (id: {})".format(sums[checksum][1], sums[checksum][0]), fg="red"),
-                doc2=colourise("  * {} (id: {})".format(document.file_name, document.pk), fg="red"),
-                code=colourise("  $ echo 'DELETE FROM documents_document WHERE id = {pk};' | ./manage.py dbshell".format(pk=document.pk), fg="green"),
-                line=colourise("\n{}\n".format("=" * 80), fg="white", opts=("bold",))
+                p1=colourise(
+                    "It appears that you have two identical documents in your collection and \nPaperless no longer supports this (see issue #97).  The documents in question\nare:",
+                    fg="yellow",
+                ),
+                p2=colourise(
+                    "To fix this problem, you'll have to remove one of them from the database, a task\nmost easily done by running the following command in the same\ndirectory as manage.py:",
+                    fg="yellow",
+                ),
+                p3=colourise(
+                    "When that's finished, re-run the migrate, and provided that there aren't any\nother duplicates, you should be good to go.",
+                    fg="yellow",
+                ),
+                doc1=colourise(
+                    f"  * {sums[checksum][1]} (id: {sums[checksum][0]})",
+                    fg="red",
+                ),
+                doc2=colourise(
+                    f"  * {document.file_name} (id: {document.pk})", fg="red"
+                ),
+                code=colourise(
+                    "  $ echo 'DELETE FROM documents_document WHERE id = {pk};' | ./manage.py dbshell".format(
+                        pk=document.pk
+                    ),
+                    fg="green",
+                ),
+                line=colourise(f'\n{"=" * 80}\n', fg="white", opts=("bold",)),
             )
             raise RuntimeError(error)
         sums[checksum] = (document.pk, document.file_name)

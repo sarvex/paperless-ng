@@ -24,13 +24,13 @@ class TestMatching(TestCase):
                 doc = Document(content=string)
                 self.assertTrue(
                     matching.matches(instance, doc),
-                    '"%s" should match "%s" but it does not' % (text, string)
+                    f'"{text}" should match "{string}" but it does not',
                 )
             for string in false:
                 doc = Document(content=string)
                 self.assertFalse(
                     matching.matches(instance, doc),
-                    '"%s" should not match "%s" but it does' % (text, string)
+                    f'"{text}" should not match "{string}" but it does',
                 )
 
     def test_match_all(self):
@@ -248,7 +248,7 @@ class TestDocumentConsumptionFinishedSignal(TestCase):
             name="test", match="no-match", matching_algorithm=Tag.MATCH_ANY)
         document_consumption_finished.send(
             sender=self.__class__, document=self.doc_contains)
-        self.assertTrue(list(self.doc_contains.tags.all()) == [])
+        self.assertTrue(not list(self.doc_contains.tags.all()))
 
     def test_correspondent_applied(self):
         correspondent = Correspondent.objects.create(

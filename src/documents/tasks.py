@@ -47,10 +47,7 @@ def train_classifier():
 
     try:
         if classifier.train():
-            logger.info(
-                "Saving updated classifier model to {}...".format(
-                    settings.MODEL_FILE)
-            )
+            logger.info(f"Saving updated classifier model to {settings.MODEL_FILE}...")
             classifier.save()
         else:
             logger.debug(
@@ -58,9 +55,7 @@ def train_classifier():
             )
 
     except Exception as e:
-        logger.warning(
-            "Classifier error: " + str(e)
-        )
+        logger.warning(f"Classifier error: {str(e)}")
 
 
 def consume_file(path,
@@ -71,20 +66,16 @@ def consume_file(path,
                  override_tag_ids=None,
                  task_id=None):
 
-    document = Consumer().try_consume_file(
+    if document := Consumer().try_consume_file(
         path,
         override_filename=override_filename,
         override_title=override_title,
         override_correspondent_id=override_correspondent_id,
         override_document_type_id=override_document_type_id,
         override_tag_ids=override_tag_ids,
-        task_id=task_id
-    )
-
-    if document:
-        return "Success. New document id {} created".format(
-            document.pk
-        )
+        task_id=task_id,
+    ):
+        return f"Success. New document id {document.pk} created"
     else:
         raise ConsumerError("Unknown error: Returned document was null, but "
                             "no error message was given.")

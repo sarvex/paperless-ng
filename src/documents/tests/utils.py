@@ -97,8 +97,9 @@ class TestMigrations(TransactionTestCase):
     def setUp(self):
         super(TestMigrations, self).setUp()
 
-        assert self.migrate_from and self.migrate_to, \
-            "TestCase '{}' must define migrate_from and migrate_to     properties".format(type(self).__name__)
+        assert (
+            self.migrate_from and self.migrate_to
+        ), f"TestCase '{type(self).__name__}' must define migrate_from and migrate_to     properties"
         self.migrate_from = [(self.app, self.migrate_from)]
         self.migrate_to = [(self.app, self.migrate_to)]
         executor = MigrationExecutor(connection)

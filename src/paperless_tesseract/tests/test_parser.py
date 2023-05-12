@@ -62,11 +62,7 @@ class TestParser(DirectoriesMixin, TestCase):
             self.assertEqual(
                 result,
                 actual_result,
-                "strip_exceess_whitespace({}) != '{}', but '{}'".format(
-                    source,
-                    result,
-                    actual_result
-                )
+                f"strip_exceess_whitespace({source}) != '{result}', but '{actual_result}'",
             )
 
     SAMPLE_FILES = os.path.join(os.path.dirname(__file__), "samples")

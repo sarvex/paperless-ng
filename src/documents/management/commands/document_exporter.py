@@ -162,22 +162,22 @@ class Command(BaseCommand):
             original_target = os.path.join(self.target, original_name)
             document_dict[EXPORTER_FILE_NAME] = original_name
 
-            thumbnail_name = base_name + "-thumbnail.png"
+            thumbnail_name = f"{base_name}-thumbnail.png"
             thumbnail_target = os.path.join(self.target, thumbnail_name)
             document_dict[EXPORTER_THUMBNAIL_NAME] = thumbnail_name
 
             if document.has_archive_version:
-                archive_name = base_name + "-archive.pdf"
+                archive_name = f"{base_name}-archive.pdf"
                 archive_target = os.path.join(self.target, archive_name)
                 document_dict[EXPORTER_ARCHIVE_NAME] = archive_name
             else:
                 archive_target = None
 
-            # 3.4. write files to target folder
-            t = int(time.mktime(document.created.timetuple()))
             if document.storage_type == Document.STORAGE_TYPE_GPG:
 
                 os.makedirs(os.path.dirname(original_target), exist_ok=True)
+                # 3.4. write files to target folder
+                t = int(time.mktime(document.created.timetuple()))
                 with open(original_target, "wb") as f:
                     f.write(GnuPG.decrypted(document.source_file))
                     os.utime(original_target, times=(t, t))
@@ -238,9 +238,10 @@ class Command(BaseCommand):
                 with open(target, "rb") as f:
                     target_checksum = hashlib.md5(f.read()).hexdigest()
                 perform_copy = target_checksum != source_checksum
-            elif source_stat.st_mtime != target_stat.st_mtime:
-                perform_copy = True
-            elif source_stat.st_size != target_stat.st_size:
+            elif (
+                source_stat.st_mtime != target_stat.st_mtime
+                or source_stat.st_size != target_stat.st_size
+            ):
                 perform_copy = True
         else:
             # Copy if it does not exist

@@ -38,17 +38,16 @@ def delete_empty_directories(directory, root):
         return
 
     while directory != root:
-        if not os.listdir(directory):
-            # it's empty
-            try:
-                os.rmdir(directory)
-            except OSError:
-                # whatever. empty directories aren't that bad anyway.
-                return
-        else:
+        if os.listdir(directory):
             # it's not empty.
             return
 
+        # it's empty
+        try:
+            os.rmdir(directory)
+        except OSError:
+            # whatever. empty directories aren't that bad anyway.
+            return
         # go one level up
         directory = os.path.normpath(os.path.dirname(directory))
 
@@ -56,7 +55,7 @@ def delete_empty_directories(directory, root):
 def many_to_dictionary(field):
     # Converts ManyToManyField to dictionary by assuming, that field
     # entries contain an _ or - which will be used as a delimiter
-    mydictionary = dict()
+    mydictionary = {}
 
     for index, t in enumerate(field.all()):
         # Populate tag names by index
@@ -103,7 +102,7 @@ def generate_unique_filename(doc,
     # the original filename first.
 
     if archive_filename and doc.filename:
-        new_filename = os.path.splitext(doc.filename)[0] + ".pdf"
+        new_filename = f"{os.path.splitext(doc.filename)[0]}.pdf"
         if new_filename == old_filename or not os.path.exists(os.path.join(root, new_filename)):  # NOQA: E501
             return new_filename
 
@@ -151,11 +150,7 @@ def generate_filename(doc, counter=0, append_gpg=True, archive_filename=False):
             else:
                 document_type = "none"
 
-            if doc.archive_serial_number:
-                asn = str(doc.archive_serial_number)
-            else:
-                asn = "none"
-
+            asn = str(doc.archive_serial_number) if doc.archive_serial_number else "none"
             path = settings.PAPERLESS_FILENAME_FORMAT.format(
                 title=pathvalidate.sanitize_filename(
                     doc.title, replacement_text="-"),

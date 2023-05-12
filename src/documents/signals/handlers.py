@@ -44,10 +44,7 @@ def set_correspondent(sender,
                                                              classifier)
 
     potential_count = len(potential_correspondents)
-    if potential_correspondents:
-        selected = potential_correspondents[0]
-    else:
-        selected = None
+    selected = potential_correspondents[0] if potential_correspondents else None
     if potential_count > 1:
         if use_first:
             logger.debug(
@@ -63,32 +60,31 @@ def set_correspondent(sender,
             )
             return
 
-    if selected or replace:
-        if suggest:
-            if base_url:
-                print(
+    if selected and suggest or not selected and replace and suggest:
+        if base_url:
+            print(
+                termcolors.colorize(str(document), fg='green')
+                if color
+                else str(document)
+            )
+            print(f"{base_url}/documents/{document.pk}")
+        else:
+            print(
+                (
                     termcolors.colorize(str(document), fg='green')
                     if color
                     else str(document)
-                )
-                print(f"{base_url}/documents/{document.pk}")
-            else:
-                print(
-                    (
-                        termcolors.colorize(str(document), fg='green')
-                        if color
-                        else str(document)
-                    ) + f" [{document.pk}]"
-                )
-            print(f"Suggest correspondent {selected}")
-        else:
-            logger.info(
-                f"Assigning correspondent {selected} to {document}",
-                extra={'group': logging_group}
+                ) + f" [{document.pk}]"
             )
+        print(f"Suggest correspondent {selected}")
+    elif selected or replace:
+        logger.info(
+            f"Assigning correspondent {selected} to {document}",
+            extra={'group': logging_group}
+        )
 
-            document.correspondent = selected
-            document.save(update_fields=("correspondent",))
+        document.correspondent = selected
+        document.save(update_fields=("correspondent",))
 
 
 def set_document_type(sender,
@@ -108,11 +104,7 @@ def set_document_type(sender,
                                                             classifier)
 
     potential_count = len(potential_document_type)
-    if potential_document_type:
-        selected = potential_document_type[0]
-    else:
-        selected = None
-
+    selected = potential_document_type[0] if potential_document_type else None
     if potential_count > 1:
         if use_first:
             logger.info(
@@ -128,32 +120,31 @@ def set_document_type(sender,
             )
             return
 
-    if selected or replace:
-        if suggest:
-            if base_url:
-                print(
+    if selected and suggest or not selected and replace and suggest:
+        if base_url:
+            print(
+                termcolors.colorize(str(document), fg='green')
+                if color
+                else str(document)
+            )
+            print(f"{base_url}/documents/{document.pk}")
+        else:
+            print(
+                (
                     termcolors.colorize(str(document), fg='green')
                     if color
                     else str(document)
-                )
-                print(f"{base_url}/documents/{document.pk}")
-            else:
-                print(
-                    (
-                        termcolors.colorize(str(document), fg='green')
-                        if color
-                        else str(document)
-                    ) + f" [{document.pk}]"
-                )
-            print(f"Sugest document type {selected}")
-        else:
-            logger.info(
-                f"Assigning document type {selected} to {document}",
-                extra={'group': logging_group}
+                ) + f" [{document.pk}]"
             )
+        print(f"Sugest document type {selected}")
+    elif selected or replace:
+        logger.info(
+            f"Assigning document type {selected} to {document}",
+            extra={'group': logging_group}
+        )
 
-            document.document_type = selected
-            document.save(update_fields=("document_type",))
+        document.document_type = selected
+        document.save(update_fields=("document_type",))
 
 
 def set_tags(sender,

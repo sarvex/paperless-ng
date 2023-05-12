@@ -61,24 +61,21 @@ class ConsumerMixin:
         super(ConsumerMixin, self).tearDown()
 
     def wait_for_task_mock_call(self, excpeted_call_count=1):
-        n = 0
-        while n < 100:
+        for _ in range(100):
             if self.task_mock.call_count >= excpeted_call_count:
                 # give task_mock some time to finish and raise errors
                 sleep(1)
                 return
-            n += 1
             sleep(0.1)
 
     # A bogus async_task that will simply check the file for
     # completeness and raise an exception otherwise.
     def bogus_task(self, func, filename, **kwargs):
-        eq = filecmp.cmp(filename, self.sample_file, shallow=False)
-        if not eq:
+        if eq := filecmp.cmp(filename, self.sample_file, shallow=False):
+            print("Consumed a perfectly valid file.")
+        else:
             print("Consumed an INVALID file.")
             raise ConsumerError("Incomplete File READ FAILED")
-        else:
-            print("Consumed a perfectly valid file.")
 
     def slow_write_file(self, target, incomplete=False):
         with open(self.sample_file, 'rb') as f:

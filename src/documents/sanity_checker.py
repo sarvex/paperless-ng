@@ -38,10 +38,10 @@ class SanityCheckMessages:
         return self._messages[item]
 
     def has_error(self):
-        return any([msg['level'] == logging.ERROR for msg in self._messages])
+        return any(msg['level'] == logging.ERROR for msg in self._messages)
 
     def has_warning(self):
-        return any([msg['level'] == logging.WARNING for msg in self._messages])
+        return any(msg['level'] == logging.WARNING for msg in self._messages)
 
 
 class SanityCheckFailedException(Exception):
@@ -53,9 +53,7 @@ def check_sanity(progress=False):
 
     present_files = []
     for root, subdirs, files in os.walk(settings.MEDIA_ROOT):
-        for f in files:
-            present_files.append(os.path.normpath(os.path.join(root, f)))
-
+        present_files.extend(os.path.normpath(os.path.join(root, f)) for f in files)
     lockfile = os.path.normpath(settings.MEDIA_LOCK)
     if lockfile in present_files:
         present_files.remove(lockfile)
@@ -89,7 +87,7 @@ def check_sanity(progress=False):
                 messages.error(
                     f"Cannot read original file of document {doc.pk}: {e}")
             else:
-                if not checksum == doc.checksum:
+                if checksum != doc.checksum:
                     messages.error(
                         f"Checksum mismatch of document {doc.pk}. "
                         f"Stored: {doc.checksum}, actual: {checksum}."
@@ -122,7 +120,7 @@ def check_sanity(progress=False):
                         f"Cannot read archive file of document {doc.pk}: {e}"
                     )
                 else:
-                    if not checksum == doc.archive_checksum:
+                    if checksum != doc.archive_checksum:
                         messages.error(
                             f"Checksum mismatch of archived document "
                             f"{doc.pk}. "
