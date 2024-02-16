@@ -48,7 +48,7 @@ uvicorn = {extras = ["standard"], version = "*"}
 concurrent-log-handler = "*"
 # uvloop 0.15+ incompatible with python 3.6
 uvloop = "~=0.15"
-cryptography = "~=3.4"
+cryptography = "~=42.0"
 "pdfminer.six" = "*"
 "backports.zoneinfo" = "*"
 
